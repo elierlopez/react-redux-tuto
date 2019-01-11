@@ -1,5 +1,5 @@
 
-import { createStore, applyMiddleware } from 'redux'
+import { createStore, applyMiddleware, combineReducers } from 'redux'
 import thunk from 'redux-thunk'
 
 //Reducers specify how the application's state changes in response to actions sent to the store. Remember that actions only describe what happened, but don't describe how the application's state changes.
@@ -13,32 +13,34 @@ const initialState = {
 
 //The reducers not necessarily should be all imported when required
 //we can make reduce composition as explained in https://redux.js.org/basics/reducers#splitting-reducers 
-const reducer = (state = initialState, action) => {
-
-    if (action.type === 'REPLACE_PRODUCTS')
-        return {
-            ...state,
-            products: action.products
-        }
-    else if (action.type === 'ADD_TO_CART') {
-        return {
-            // las dos lineas de abajo significan:
-            //1: se crea una copia del estado 
-            //2: se reemplaza la propiedad cart con un unevo valor que es: el arreglo cart mas un elemnto
-            // que se le concatena. Este nuevo elemento viene en el action: action.product   
-            ...state,
-            cart: state.cart.concat(action.product)
-        }
+const cartReducer = (state=[], action) => {
+    console.log(state)
+    console.log(initialState)
+    if (action.type === 'ADD_TO_CART') {
+        return state.concat(action.product)
+        // return {
+        //     // las dos lineas de abajo significan:
+        //     //1: se crea una copia del estado 
+        //     //2: se reemplaza la propiedad cart con un unevo valor que es: el arreglo cart mas un elemnto
+        //     // que se le concatena. Este nuevo elemento viene en el action: action.product   
+        //     ...state,
+        //     cart: state.cart.concat(action.product)
+        // }
     }
-    if (action.type === 'REMOVE_FROM_CART') {
-        return {
-            ...state,
-            cart: state.cart.filter(e => e !== action.product)
-        }
+    else if (action.type === 'REMOVE_FROM_CART') {
+        return state.filter(e => e !== action.product)
+    }
+    return state
+}
+
+const productsReducer = (state=[], action) => {
+    if (action.type === 'REPLACE_PRODUCTS') {
+        return action.products
     }
 
     return state
 }
+
 
 const logger = store => next => action => {
     console.log('dispatching', action)
@@ -47,7 +49,7 @@ const logger = store => next => action => {
     return result
 }
 
-export default createStore(reducer, initialState, applyMiddleware(logger, thunk))
+export default createStore(combineReducers({ cart: cartReducer, products: productsReducer }), applyMiddleware(logger, thunk))
 // The store holds the state and takes care of calling the reducer when an action is dispatched
 /*
     store responsabilities:
